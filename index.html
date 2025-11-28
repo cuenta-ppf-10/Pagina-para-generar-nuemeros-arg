@@ -1,377 +1,265 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#071023" />
-<title>Generador responsive — Números Buenos Aires (fix)</title>
-<style>
-  :root{
-    --bg1:#071023; --card:#071b2a; --accent:#06b6d4; --muted:#9fb3c3;
-    --glass: rgba(255,255,255,0.03); --success:#16a34a; --danger:#ef4444;
-    --radius:14px; --gap:12px;
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-
-  /* RESET / BOX */
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-
-  /* Use safe-area insets so the notch/statusbar doesn't cover content */
-  body{
-    background: linear-gradient(180deg,var(--bg1), #042033 120%);
-    color: #e7f5fb;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* padding includes safe-area-inset for top/bottom + comfortable 12px */
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
-    padding-right: calc(12px + env(safe-area-inset-right, 0px));
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    padding-left: calc(12px + env(safe-area-inset-left, 0px));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-  }
-
-  .wrap{
-    width:100%;
-    max-width:980px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:16px;
-    padding:16px;
-    box-shadow:0 10px 40px rgba(2,6,23,0.6);
-    border:1px solid rgba(255,255,255,0.03);
-    display:grid;
-    gap:14px;
-  }
-
-  /* header: allow wrap so nothing overflows on small screens */
-  header{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    justify-content:space-between;
-    flex-wrap:wrap;      /* <-- clave: permite que los botones bajen */
-  }
-  header .title{
-    display:flex;
-    flex-direction:column;
-    min-width:0;
-    gap:4px;
-  }
-  header h1{
-    font-size:16px;
-    margin:0;
-    line-height:1.1;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  header p{margin:0; font-size:12px; color:var(--muted)}
-
-  /* header actions: se reducen y pasan a segunda línea si falta espacio */
-  .header-actions{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-shrink:0;
-  }
-  .header-actions button{ min-width:110px; }
-
-  /* controls */
-  .controls{
-    display:grid;
-    gap:10px;
-  }
-  .grid{
-    display:grid;
-    gap:8px;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px}
-  input[type=number], select{
-    width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
-    background:var(--glass); color:inherit; font-size:15px; outline:none;
-  }
-
-  .actions-row{display:flex; gap:8px; flex-wrap:wrap}
-  button{
-    -webkit-tap-highlight-color: transparent;
-    border:0; padding:12px 14px; border-radius:12px; font-weight:700; cursor:pointer;
-    background:linear-gradient(90deg,var(--accent), #06b6b0); color:#022; min-width:120px;
-    box-shadow:0 6px 18px rgba(6,182,212,0.08);
-  }
-  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted)}
-  button.tiny{padding:8px 10px; font-size:13px}
-  button.full{flex:1; min-width:0}
-
-  /* list */
-  .list{display:grid; gap:10px; margin-top:6px; max-height:45vh; overflow:auto; padding-right:6px}
-  .item{
-    display:flex; gap:8px; align-items:center; justify-content:space-between;
-    padding:10px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
-    border:1px solid rgba(255,255,255,0.02);
-    min-width:0;
-  }
-  .left{display:flex; gap:10px; align-items:center; min-width:0}
-  .number{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-weight:700; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .meta{font-size:12px; color:var(--muted); white-space:nowrap}
-
-  .item .btns{display:flex; gap:8px; flex-shrink:0}
-  footer{font-size:12px; color:var(--muted); margin-top:6px}
-
-  /* small screens adjustments */
-  @media (max-width:560px){
-    .grid{grid-template-columns:1fr;}
-    header h1{font-size:15px}
-    .header-actions button{ min-width:90px; padding:10px 12px }
-    .list{max-height:55vh}
-  }
-
-  /* larger screens */
-  @media (min-width:720px){
-    .grid{grid-template-columns: 1fr 1fr 1fr;}
-    header h1{font-size:18px}
-  }
-
-  /* toast: put above safe-area bottom */
-  #toast{
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    background: rgba(2,6,23,0.95);
-    color: #d1fae5;
-    padding: 10px 14px;
-    border-radius: 12px;
-    display:none;
-    box-shadow:0 8px 30px rgba(0,0,0,0.6);
-    z-index: 9999;
-    font-weight:700;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Generador de números - Buenos Aires</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#111827; --accent:#06b6d4; --muted:#94a3b8; --success:#16a34a;
+      --glass: rgba(255,255,255,0.03);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; background:linear-gradient(180deg,#021026 0%, #071023 100%);
+      color:#e6eef6; display:flex; align-items:center; justify-content:center; padding:28px;
+    }
+    .card{
+      width:100%; max-width:880px; background:var(--card); padding:20px; border-radius:12px; box-shadow:0 8px 30px rgba(2,6,23,0.6);
+    }
+    h1{margin:0 0 6px 0; font-size:20px}
+    p.lead{margin:0 0 18px 0; color:var(--muted); font-size:13px}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+    label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px}
+    input[type=number], select{
+      background:var(--glass); border:1px solid rgba(255,255,255,0.04); color:inherit;
+      padding:8px 10px; border-radius:8px; min-width:120px;
+    }
+    button{
+      background:linear-gradient(90deg,var(--accent), #06b6b0); border:0; padding:10px 14px; border-radius:10px;
+      color:#042027; font-weight:600; cursor:pointer;
+      box-shadow: 0 6px 18px rgba(6,182,212,0.12);
+    }
+    button.ghost{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03)}
+    .controls{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px}
+    .list{margin-top:14px; display:grid; gap:10px}
+    .item{
+      display:flex; align-items:center; justify-content:space-between;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.02);
+    }
+    .number{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-weight:600}
+    .tag{font-size:12px; color:var(--muted); margin-left:8px}
+    .small{font-size:12px; color:var(--muted)}
+    .actions{display:flex; gap:8px; align-items:center}
+    .toast{position:fixed; right:20px; bottom:20px; background:rgba(2,6,23,0.9); color:#d1fae5; padding:10px 14px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.6); display:none}
+    footer{margin-top:12px; color:var(--muted); font-size:12px}
+    @media(max-width:560px){
+      .row{flex-direction:column; align-items:stretch}
+    }
+  </style>
 </head>
 <body>
-  <main class="wrap" role="main" aria-labelledby="title">
-    <header>
-      <div class="title">
-        <h1 id="title">Generador responsive — Números de Buenos Aires</h1>
-        <p>Touch-friendly — copia, comparte o descarga. Corregido para notches y pantallas angostas.</p>
+  <div class="card" role="main">
+    <h1>Generador de números aleatorios — Buenos Aires</h1>
+    <p class="lead">Genera números (fijo/móvil) con código de área <strong>11</strong> y cópialos rápido. Útil para pruebas, ejemplos y maquetas.</p>
+
+    <div class="controls">
+      <div>
+        <label for="qty">Cantidad</label>
+        <input id="qty" type="number" min="1" max="200" value="10" />
       </div>
 
-      <div class="header-actions" role="toolbar" aria-label="Acciones principales">
-        <button id="generate" title="Generar números">Generar</button>
-        <button id="copyAll" class="ghost tiny" title="Copiar todos">Copiar todos</button>
-      </div>
-    </header>
-
-    <section class="controls" aria-label="Controles">
-      <div class="grid" role="group" aria-label="Opciones de generación">
-        <div>
-          <label for="qty">Cantidad (1–500)</label>
-          <input id="qty" type="number" min="1" max="500" value="12" />
-        </div>
-
-        <div>
-          <label for="type">Tipo</label>
-          <select id="type" aria-label="Tipo de número">
-            <option value="both">Ambos (fijo + móvil)</option>
-            <option value="fixed">Fijo (línea)</option>
-            <option value="mobile">Móvil</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="format">Formato</label>
-          <select id="format" aria-label="Formato del número">
-            <option value="local">Local: 11-XXXX-XXXX</option>
-            <option value="national">Nacional: 011-15-XXXX-XXXX</option>
-            <option value="international">Internacional: +54 9 11 XXXXXXXX</option>
-          </select>
-        </div>
+      <div>
+        <label for="type">Tipo</label>
+        <select id="type">
+          <option value="both">Ambos (fijo + móvil)</option>
+          <option value="fixed">Fijo (línea)</option>
+          <option value="mobile">Móvil</option>
+        </select>
       </div>
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-        <button id="downloadTxt" class="ghost full tiny" title="Descargar .txt">Descargar .txt</button>
-        <button id="downloadCsv" class="ghost full tiny" title="Descargar .csv">Descargar .csv</button>
-        <button id="shareBtn" class="ghost full tiny" title="Compartir (móviles)">Compartir</button>
+      <div>
+        <label for="format">Formato</label>
+        <select id="format">
+          <option value="local">Local: 11-XXXX-XXXX</option>
+          <option value="national">Nacional: 011-15-XXXX-XXXX (uso doméstico)</option>
+          <option value="international">Internacional: +54 9 11 XXXXXXXX</option>
+        </select>
       </div>
-    </section>
 
-    <section aria-live="polite" id="list" class="list" aria-label="Lista de números"></section>
+      <div style="display:flex; align-items:end; gap:8px;">
+        <button id="generate">Generar</button>
+        <button id="copyAll" class="ghost">Copiar todo</button>
+      </div>
+    </div>
 
-    <footer>Nota: números generados aleatoriamente. No garantizan existencia real. Usa con responsabilidad.</footer>
-  </main>
+    <div id="list" class="list" aria-live="polite"></div>
 
-  <div id="toast" role="status" aria-live="polite">Copiado ✔</div>
+    <footer>Nota: los números son generados aleatoriamente y <strong>no garantizan</strong> que correspondan a líneas reales. Si vas a usar números reales, sé responsable.</footer>
+  </div>
 
-<script>
-/* — Funciones principales — */
-const qtyInput = document.getElementById('qty');
-const typeSelect = document.getElementById('type');
-const formatSelect = document.getElementById('format');
-const generateBtn = document.getElementById('generate');
-const listEl = document.getElementById('list');
-const copyAllBtn = document.getElementById('copyAll');
-const downloadTxt = document.getElementById('downloadTxt');
-const downloadCsv = document.getElementById('downloadCsv');
-const shareBtn = document.getElementById('shareBtn');
-const toast = document.getElementById('toast');
+  <div id="toast" class="toast" role="status" aria-live="polite">Copiado ✔</div>
 
-function rndInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-function pad(n,size){let s=String(n); while(s.length<size) s='0'+s; return s}
+  <script>
+    // Buenos Aires: código de área = 11. 
+    // Para fijos: número base de 8 cifras (ej: 1234-5678).
+    // Para móviles locales en Argentina se suele usar "15" delante cuando se marca dentro del país.
+    // En formato internacional para móviles se usa: +54 9 11 XXXXXXXXX (sin el "15").
+    // Aquí generamos 8 dígitos aleatorios y construimos según el formato elegido.
 
-/* generador: 8 dígitos, no empieza en 0 (más realista) */
-function generateSubscriber8(){
-  const first = rndInt(2,9);
-  const tail = pad(rndInt(0, 9999999), 7);
-  return String(first) + tail;
-}
+    const qtyInput = document.getElementById('qty');
+    const typeSelect = document.getElementById('type');
+    const formatSelect = document.getElementById('format');
+    const generateBtn = document.getElementById('generate');
+    const listEl = document.getElementById('list');
+    const copyAllBtn = document.getElementById('copyAll');
+    const toast = document.getElementById('toast');
 
-function formatNumber(sub8, kind, fmt){
-  const area = '11';
-  if(fmt === 'local'){
-    return `${area}-${sub8.slice(0,4)}-${sub8.slice(4)}`;
-  } else if(fmt === 'national'){
-    return kind === 'mobile' ? `011-15-${sub8.slice(0,4)}-${sub8.slice(4)}` : `011-${sub8.slice(0,4)}-${sub8.slice(4)}`;
-  } else {
-    return kind === 'mobile' ? `+54 9 ${area} ${sub8}` : `+54 ${area} ${sub8}`;
-  }
-}
-
-/* toast breve */
-function showToast(text='Copiado ✔'){
-  toast.textContent = text;
-  toast.style.display = 'block';
-  clearTimeout(toast._t);
-  toast._t = setTimeout(()=> toast.style.display='none', 1600);
-}
-
-/* crear elemento de lista */
-function createItem(display, rawKind, raw){
-  const item = document.createElement('div'); item.className='item';
-  const left = document.createElement('div'); left.className='left';
-  const num = document.createElement('div'); num.className='number'; num.textContent = display;
-  const meta = document.createElement('div'); meta.className='meta'; meta.textContent = rawKind;
-  left.appendChild(num); left.appendChild(meta);
-
-  const btns = document.createElement('div'); btns.className='btns';
-  const copyBtn = document.createElement('button'); copyBtn.className='tiny';
-  copyBtn.textContent = 'Copiar';
-  copyBtn.onclick = async ()=>{
-    try{
-      await navigator.clipboard.writeText(display);
-      showToast('Copiado ✔');
-    } catch(e){
-      const ta = document.createElement('textarea'); ta.value = display; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); ta.remove(); showToast('Copiado (fallback) ✔');
+    function rndInt(min, max){
+      return Math.floor(Math.random()*(max-min+1)) + min;
     }
-  };
 
-  const rawBtn = document.createElement('button'); rawBtn.className='tiny ghost';
-  rawBtn.textContent = 'Raw';
-  rawBtn.onclick = ()=> alert(`Raw: ${raw}\nTipo: ${rawKind}`);
+    function pad(num, size){
+      let s = String(num);
+      while(s.length < size) s = '0' + s;
+      return s;
+    }
 
-  btns.appendChild(copyBtn); btns.appendChild(rawBtn);
-  item.appendChild(left); item.appendChild(btns);
-  return item;
-}
+    function generateSubscriber8(){
+      // Devuelve un string de 8 dígitos que no comienza con 0 (más realista)
+      let first = rndInt(2,9);
+      let tail = pad(rndInt(0, 9999999), 7); // 7 dígitos
+      return String(first) + tail;
+    }
 
-/* generación y estado compartido (lista interna) */
-let currentList = []; // {display, rawKind, raw}
-function generateNumbers(){
-  const qty = Math.min(500, Math.max(1, parseInt(qtyInput.value) || 12));
-  const type = typeSelect.value;
-  const fmt = formatSelect.value;
-  currentList = [];
-  listEl.innerHTML = '';
+    function formatNumber(subscriber8, kind, fmt){
+      // kind: 'fixed' | 'mobile'
+      // fmt: 'local' | 'national' | 'international'
+      const area = '11';
+      if(fmt === 'local'){
+        // 11-XXXX-XXXX
+        return `${area}-${subscriber8.slice(0,4)}-${subscriber8.slice(4)}`;
+      } else if(fmt === 'national'){
+        // domestic representation commonly: 011-15-XXXX-XXXX for mobiles (011 is trunk for area code 11)
+        if(kind === 'mobile'){
+          return `011-15-${subscriber8.slice(0,4)}-${subscriber8.slice(4)}`;
+        } else {
+          return `011-${subscriber8.slice(0,4)}-${subscriber8.slice(4)}`;
+        }
+      } else {
+        // international
+        if(kind === 'mobile'){
+          // +54 9 11 XXXXXXXX
+          return `+54 9 ${area} ${subscriber8}`;
+        } else {
+          // +54 11 XXXXXXXX (landline)
+          return `+54 ${area} ${subscriber8}`;
+        }
+      }
+    }
 
-  for(let i=0;i<qty;i++){
-    let kind;
-    if(type === 'both') kind = (Math.random() < 0.5) ? 'móvil' : 'fijo';
-    else kind = (type === 'mobile') ? 'móvil' : 'fijo';
+    function showToast(text='Copiado ✔'){
+      toast.textContent = text;
+      toast.style.display = 'block';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(()=>{ toast.style.display='none'; }, 1800);
+    }
 
-    const sub8 = generateSubscriber8();
-    const display = formatNumber(sub8, (kind==='móvil'?'mobile':'fixed'), fmt);
-    currentList.push({display, rawKind: kind, raw: sub8});
-  }
+    function createItemElement(displayString, rawString){
+      const item = document.createElement('div');
+      item.className = 'item';
+      const left = document.createElement('div');
+      left.style.display = 'flex';
+      left.style.alignItems = 'center';
 
-  // render
-  for(const it of currentList){
-    listEl.appendChild(createItem(it.display, it.rawKind, it.raw));
-  }
-}
+      const num = document.createElement('div');
+      num.className = 'number';
+      num.textContent = displayString;
 
-/* copiar todos (líneas separadas) */
-async function copyAll(){
-  if(currentList.length === 0) { showToast('Nada para copiar'); return; }
-  const all = currentList.map(x=>x.display).join('\n');
-  try{
-    await navigator.clipboard.writeText(all);
-    showToast('Todos copiados ✔');
-  }catch(e){
-    const ta = document.createElement('textarea'); ta.value = all; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); ta.remove(); showToast('Todos copiados (fallback) ✔');
-  }
-}
+      const tag = document.createElement('div');
+      tag.className = 'tag small';
+      tag.textContent = rawString.rawKind ? ` ${rawString.rawKind}` : '';
 
-/* descargar archivos */
-function download(filename, text){
-  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a);
-  a.click(); a.remove(); URL.revokeObjectURL(url);
-}
+      left.appendChild(num);
+      left.appendChild(tag);
 
-function downloadTxtFile(){
-  if(currentList.length===0){ showToast('Nada para descargar'); return; }
-  const text = currentList.map(x=>x.display).join('\n');
-  download('numeros_ba.txt', text);
-  showToast('Descarga iniciada');
-}
+      const actions = document.createElement('div');
+      actions.className = 'actions';
 
-function downloadCsvFile(){
-  if(currentList.length===0){ showToast('Nada para descargar'); return; }
-  const lines = ['display,rawKind,raw'];
-  for(const r of currentList){
-    const d = `"${r.display.replace(/"/g,'""')}"`;
-    const k = `"${r.rawKind}"`;
-    const raw = `"${r.raw}"`;
-    lines.push([d,k,raw].join(','));
-  }
-  download('numeros_ba.csv', lines.join('\n'));
-  showToast('CSV listo');
-}
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copiar';
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(displayString);
+          showToast('Copiado ✔');
+        } catch(e){
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = displayString;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          showToast('Copiado (fallback) ✔');
+        }
+      };
 
-/* compartir nativo en móviles */
-async function shareNative(){
-  if(!navigator.share){ showToast('Compartir no disponible'); return; }
-  if(currentList.length===0){ showToast('Nada para compartir'); return; }
-  const text = currentList.map(x=>x.display).join('\n');
-  try{
-    await navigator.share({ title: 'Números Buenos Aires', text });
-    showToast('Compartido ✔');
-  }catch(e){
-    showToast('No compartido');
-  }
-}
+      const rawBtn = document.createElement('button');
+      rawBtn.className = 'ghost';
+      rawBtn.textContent = 'Ver crudo';
+      rawBtn.onclick = () => alert(`Número raw:\n${rawString.raw}\nTipo: ${rawString.rawKind || 'fijo'}`);
 
-/* listeners */
-generateBtn.addEventListener('click', generateNumbers);
-copyAllBtn.addEventListener('click', copyAll);
-downloadTxt.addEventListener('click', downloadTxtFile);
-downloadCsv.addEventListener('click', downloadCsvFile);
-shareBtn.addEventListener('click', shareNative);
+      actions.appendChild(copyBtn);
+      actions.appendChild(rawBtn);
 
-/* generar al cargar para UX inmediato */
-generateNumbers();
+      item.appendChild(left);
+      item.appendChild(actions);
+      return item;
+    }
 
-/* accesibilidad: generar con Enter cuando un control tiene foco */
-[qtyInput, typeSelect, formatSelect].forEach(el=>{
-  el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ generateNumbers(); }});
-});
-</script>
+    function generateNumbers(){
+      const qty = Math.min(200, Math.max(1, parseInt(qtyInput.value) || 10));
+      const type = typeSelect.value; // fixed / mobile / both
+      const fmt = formatSelect.value;
+      listEl.innerHTML = '';
+
+      const list = [];
+      for(let i=0;i<qty;i++){
+        let kind;
+        if(type === 'both'){
+          kind = (Math.random() < 0.5) ? 'fixed' : 'mobile';
+        } else {
+          kind = type;
+        }
+        const sub8 = generateSubscriber8();
+        const display = formatNumber(sub8, kind, fmt);
+        const raw = {
+          raw: sub8,
+          rawKind: kind
+        };
+        list.push({display, raw});
+      }
+
+      // Añadir DOM
+      for(const entry of list){
+        listEl.appendChild(createItemElement(entry.display, entry.raw));
+      }
+
+      // Activar botón copiar todo con texto plano (cada uno en nueva línea)
+      copyAllBtn.onclick = async () => {
+        const allText = list.map(l => l.display).join('\\n');
+        try {
+          await navigator.clipboard.writeText(allText);
+          showToast('Todos copiados ✔');
+        } catch(e){
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = allText;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          showToast('Todos copiados (fallback) ✔');
+        }
+      };
+    }
+
+    // Inicial
+    generateBtn.addEventListener('click', generateNumbers);
+    // Generar al cargar
+    generateNumbers();
+  </script>
 </body>
 </html>
